@@ -1,0 +1,30 @@
+Once Factory — textures you should draw
+========================================
+See the full Japanese guide in the repository file TEXTURES_TO_DRAW.txt
+(maintained under myforge-mod / project artifacts).
+
+Paths under: src/main/resources/assets/oncefactory/textures/
+
+BLOCK (16x16 PNG)
+  block/crusher_front.png
+  block/crusher_front_used.png
+  block/crusher_front_critical.png
+  block/crusher_side.png
+  block/crusher_side_used.png
+  block/crusher_side_critical.png
+  block/crusher_top.png
+  block/crusher_top_used.png
+  block/crusher_top_critical.png
+  block/crusher_bottom.png (optional)
+  block/broken_machine.png
+
+ITEM (16x16 PNG, transparent background)
+  item/life_memory.png
+
+GUI
+  gui/crusher.png  (176x166 or 256x166 with arrow sprites at x>=176)
+
+Theme: finite industrial machines — metal, wear stages (green/yellow/red lamp),
+broken remains, crystalline life-memory shard.
+
+Overwrite the placeholder PNGs with the same filenames.

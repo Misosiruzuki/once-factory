@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/orientable",
   "textures": {
-    "all": "minecraft:block/magma"
+    "top": "oncefactory:block/crusher_top_critical",
+    "front": "oncefactory:block/crusher_front_critical",
+    "side": "oncefactory:block/crusher_side_critical"
   }
 }

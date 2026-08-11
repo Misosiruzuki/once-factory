@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/orientable",
   "textures": {
-    "all": "minecraft:block/blast_furnace_front_on"
+    "top": "oncefactory:block/crusher_top_used",
+    "front": "oncefactory:block/crusher_front_used",
+    "side": "oncefactory:block/crusher_side_used"
   }
 }
