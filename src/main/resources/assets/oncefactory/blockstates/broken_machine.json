@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "oncefactory:block/broken_machine" }
+  }
+}

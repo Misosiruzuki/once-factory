@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north,degradation=0": { "model": "oncefactory:block/crusher" },
+    "facing=south,degradation=0": { "model": "oncefactory:block/crusher", "y": 180 },
+    "facing=west,degradation=0":  { "model": "oncefactory:block/crusher", "y": 270 },
+    "facing=east,degradation=0":  { "model": "oncefactory:block/crusher", "y": 90 },
+    "facing=north,degradation=1": { "model": "oncefactory:block/crusher_used" },
+    "facing=south,degradation=1": { "model": "oncefactory:block/crusher_used", "y": 180 },
+    "facing=west,degradation=1":  { "model": "oncefactory:block/crusher_used", "y": 270 },
+    "facing=east,degradation=1":  { "model": "oncefactory:block/crusher_used", "y": 90 },
+    "facing=north,degradation=2": { "model": "oncefactory:block/crusher_critical" },
+    "facing=south,degradation=2": { "model": "oncefactory:block/crusher_critical", "y": 180 },
+    "facing=west,degradation=2":  { "model": "oncefactory:block/crusher_critical", "y": 270 },
+    "facing=east,degradation=2":  { "model": "oncefactory:block/crusher_critical", "y": 90 }
+  }
+}
