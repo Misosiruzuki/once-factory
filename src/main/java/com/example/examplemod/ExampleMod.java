@@ -4,13 +4,17 @@ import com.example.examplemod.block.BrokenMachineBlock;
 import com.example.examplemod.block.CrusherBlock;
 import com.example.examplemod.block.entity.CrusherBlockEntity;
 import com.example.examplemod.client.CrusherScreen;
+import com.example.examplemod.item.CrusherBlockItem;
 import com.example.examplemod.item.LifeMemoryItem;
+import com.example.examplemod.recipe.CrusherWithMemoryRecipe;
 import com.example.examplemod.menu.CrusherMenu;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -32,13 +36,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.slf4j.Logger;
 
-/**
- * Once Factory — 一度きりの工場
- *
- * 機械には寿命がある。
- * 効率で競う土俵は存在しない。
- * 使い切ったら、次の工場を設計せよ。
- */
 @Mod(ExampleMod.MODID)
 public class ExampleMod {
 
@@ -51,30 +48,31 @@ public class ExampleMod {
             DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, MODID);
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
+            DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    // === Blocks ===
     public static final RegistryObject<Block> CRUSHER = BLOCKS.register("crusher", CrusherBlock::new);
     public static final RegistryObject<Block> BROKEN_MACHINE = BLOCKS.register("broken_machine", BrokenMachineBlock::new);
 
-    // === Items ===
     public static final RegistryObject<Item> CRUSHER_ITEM = ITEMS.register("crusher",
-            () -> new BlockItem(CRUSHER.get(), new Item.Properties()));
+            () -> new CrusherBlockItem(CRUSHER.get(), new Item.Properties()));
     public static final RegistryObject<Item> BROKEN_MACHINE_ITEM = ITEMS.register("broken_machine",
             () -> new BlockItem(BROKEN_MACHINE.get(), new Item.Properties()));
     public static final RegistryObject<Item> LIFE_MEMORY = ITEMS.register("life_memory", LifeMemoryItem::new);
 
-    // === Block Entity ===
     public static final RegistryObject<BlockEntityType<CrusherBlockEntity>> CRUSHER_BE =
             BLOCK_ENTITIES.register("crusher",
                     () -> BlockEntityType.Builder.of(CrusherBlockEntity::new, CRUSHER.get()).build(null));
 
-    // === Menu ===
     public static final RegistryObject<MenuType<CrusherMenu>> CRUSHER_MENU =
             MENUS.register("crusher_menu", () -> IForgeMenuType.create(CrusherMenu::new));
 
-    // === Creative Tab ===
+    public static final RegistryObject<RecipeSerializer<CrusherWithMemoryRecipe>> CRUSHER_WITH_MEMORY_SERIALIZER =
+            RECIPE_SERIALIZERS.register("crusher_with_memory",
+                    () -> new SimpleCraftingRecipeSerializer<>(CrusherWithMemoryRecipe::new));
+
     public static final RegistryObject<CreativeModeTab> ONCE_FACTORY_TAB = CREATIVE_MODE_TABS.register("once_factory_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.examplemod.once_factory"))
@@ -95,6 +93,7 @@ public class ExampleMod {
         ITEMS.register(modEventBus);
         BLOCK_ENTITIES.register(modEventBus);
         MENUS.register(modEventBus);
+        RECIPE_SERIALIZERS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
 
         MinecraftForge.EVENT_BUS.register(this);
