@@ -1,0 +1,13 @@
+{
+  "itemGroup.oncefactory.once_factory": "一度きりの工場",
+  "block.oncefactory.crusher": "粉砕機",
+  "block.oncefactory.broken_machine": "壊れた機械",
+  "item.oncefactory.life_memory": "寿命の記憶",
+  "tooltip.oncefactory.life_memory": "死んだ機械の記憶。",
+  "tooltip.oncefactory.life_memory_bonus": "クラフト時に使うと初期寿命 +%s",
+  "message.oncefactory.machine_dead": "この機械は死んだ。次の工場を設計せよ。",
+  "gui.oncefactory.life": "残り寿命: %s / %s",
+  "tooltip.oncefactory.crusher_life": "初期寿命: %s",
+  "tooltip.oncefactory.crusher_life_bonus": "記憶ボーナス: +%s",
+  "gui.oncefactory.energy": "FE: %s / %s"
+}

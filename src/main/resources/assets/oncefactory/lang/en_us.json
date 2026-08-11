@@ -1,0 +1,13 @@
+{
+  "itemGroup.oncefactory.once_factory": "Once Factory",
+  "block.oncefactory.crusher": "Crusher",
+  "block.oncefactory.broken_machine": "Broken Machine",
+  "item.oncefactory.life_memory": "Life Memory",
+  "tooltip.oncefactory.life_memory": "Memory of a dead machine.",
+  "tooltip.oncefactory.life_memory_bonus": "Use when crafting to gain +%s starting life",
+  "message.oncefactory.machine_dead": "This machine is dead. Design the next factory.",
+  "gui.oncefactory.life": "Life: %s / %s",
+  "tooltip.oncefactory.crusher_life": "Starting life: %s",
+  "tooltip.oncefactory.crusher_life_bonus": "Memory bonus: +%s",
+  "gui.oncefactory.energy": "FE: %s / %s"
+}
