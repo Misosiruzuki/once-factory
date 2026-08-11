@@ -35,11 +35,8 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
 
-        // バニラかまど風の仮背景（テクスチャが無い場合でも最低限動くように）
-        // 本格的には crusher.png を用意する
         graphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
 
-        // 進捗矢印
         if (menu.isCrafting()) {
             int progress = menu.getScaledProgress();
             graphics.blit(TEXTURE, x + 79, y + 35, 176, 14, progress, 17);
@@ -52,11 +49,13 @@ public class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         super.render(graphics, mouseX, mouseY, delta);
         renderTooltip(graphics, mouseX, mouseY);
 
-        // 寿命表示
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
         String lifeText = Component.translatable("gui.examplemod.life",
                 menu.getRemainingLife(), menu.getMaxLife()).getString();
         graphics.drawString(this.font, lifeText, x + 8, y + 58, 0x404040, false);
+        String energyText = Component.translatable("gui.examplemod.energy",
+                menu.getEnergyStored(), menu.getMaxEnergyStored()).getString();
+        graphics.drawString(this.font, energyText, x + 8, y + 68, 0x404040, false);
     }
 }
