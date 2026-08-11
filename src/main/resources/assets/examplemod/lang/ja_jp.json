@@ -8,5 +8,6 @@
   "tooltip.examplemod.crusher_life": "初期寿命: %s",
   "tooltip.examplemod.crusher_life_bonus": "記憶ボーナス: +%s",
   "message.examplemod.machine_dead": "この機械は死んだ。次の工場を設計せよ。",
-  "gui.examplemod.life": "残り寿命: %s / %s"
+  "gui.examplemod.life": "残り寿命: %s / %s",
+  "gui.examplemod.energy": "FE: %s / %s"
 }

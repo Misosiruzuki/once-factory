@@ -8,5 +8,6 @@
   "tooltip.examplemod.crusher_life": "Starting life: %s",
   "tooltip.examplemod.crusher_life_bonus": "Memory bonus: +%s",
   "message.examplemod.machine_dead": "This machine is dead. Design the next factory.",
-  "gui.examplemod.life": "Life: %s / %s"
+  "gui.examplemod.life": "Life: %s / %s",
+  "gui.examplemod.energy": "FE: %s / %s"
 }
