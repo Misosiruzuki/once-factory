@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without v prefix (e.g. 0.1.0)"
+        required: true
+        default: "0.1.0"
 
 permissions:
   contents: write
@@ -35,13 +41,24 @@ jobs:
           echo "path=$JAR" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$JAR")" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve tag name
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Once Factory ${{ steps.meta.outputs.tag }}
           files: ${{ steps.jar.outputs.path }}
           generate_release_notes: true
           body: |
-            ## Once Factory ${{ github.ref_name }}
+            ## Once Factory ${{ steps.meta.outputs.tag }}
 
             Minecraft **1.20.1** / Forge **47.4.10**
 
