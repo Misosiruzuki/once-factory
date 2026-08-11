@@ -3,6 +3,9 @@ package com.example.examplemod.block.entity;
 import com.example.examplemod.Config;
 import com.example.examplemod.ExampleMod;
 import com.example.examplemod.block.CrusherBlock;
+import com.example.examplemod.capability.ReceiveOnlyEnergy;
+import com.example.examplemod.capability.RelativeSide;
+import com.example.examplemod.capability.SlotRestrictedHandler;
 import com.example.examplemod.energy.MachineEnergyStorage;
 import com.example.examplemod.menu.CrusherMenu;
 import net.minecraft.core.BlockPos;
@@ -43,12 +46,20 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         protected void onContentsChanged(int slot) {
             setChanged();
         }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot == SLOT_INPUT;
+        }
     };
 
     private final MachineEnergyStorage energyStorage = new MachineEnergyStorage(10000, 200, 0, this::setChanged);
 
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
-    private LazyOptional<IEnergyStorage> lazyEnergyHandler = LazyOptional.empty();
+    private LazyOptional<IItemHandler> lazyInputHandler = LazyOptional.empty();
+    private LazyOptional<IItemHandler> lazyOutputHandler = LazyOptional.empty();
+    private LazyOptional<IEnergyStorage> lazyEnergyReceive = LazyOptional.empty();
+    private LazyOptional<IEnergyStorage> lazyEnergyBlocked = LazyOptional.empty();
 
     private int progress = 0;
     private int remainingLife;
@@ -133,22 +144,56 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         return new CrusherMenu(id, inv, this, this.data);
     }
 
+    /**
+     * Side IO (relative to FACING):
+     * TOP/BACK/LEFT/RIGHT = item input; BOTTOM = item output; FRONT = no item IO.
+     * All except FRONT accept FE; FRONT blocks energy.
+     */
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            return lazyItemHandler.cast();
+            if (side == null) {
+                return lazyItemHandler.cast();
+            }
+            RelativeSide rel = relativeSide(side);
+            return switch (rel) {
+                case TOP, BACK, LEFT, RIGHT -> lazyInputHandler.cast();
+                case BOTTOM -> lazyOutputHandler.cast();
+                case FRONT -> LazyOptional.empty();
+            };
         }
         if (cap == ForgeCapabilities.ENERGY) {
-            return lazyEnergyHandler.cast();
+            if (side == null) {
+                return lazyEnergyReceive.cast();
+            }
+            RelativeSide rel = relativeSide(side);
+            return switch (rel) {
+                case FRONT -> lazyEnergyBlocked.cast();
+                case TOP, BOTTOM, BACK, LEFT, RIGHT -> lazyEnergyReceive.cast();
+            };
         }
         return super.getCapability(cap, side);
+    }
+
+    private RelativeSide relativeSide(Direction absolute) {
+        Direction facing = Direction.NORTH;
+        BlockState state = getBlockState();
+        if (state.hasProperty(CrusherBlock.FACING)) {
+            facing = state.getValue(CrusherBlock.FACING);
+        }
+        return RelativeSide.from(facing, absolute);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
         lazyItemHandler = LazyOptional.of(() -> itemHandler);
-        lazyEnergyHandler = LazyOptional.of(() -> energyStorage);
+        lazyInputHandler = LazyOptional.of(() ->
+                new SlotRestrictedHandler(itemHandler, SLOT_INPUT, SlotRestrictedHandler.Access.INSERT_ONLY));
+        lazyOutputHandler = LazyOptional.of(() ->
+                new SlotRestrictedHandler(itemHandler, SLOT_OUTPUT, SlotRestrictedHandler.Access.EXTRACT_ONLY));
+        lazyEnergyReceive = LazyOptional.of(() -> new ReceiveOnlyEnergy(energyStorage, true));
+        lazyEnergyBlocked = LazyOptional.of(() -> new ReceiveOnlyEnergy(energyStorage, false));
         ensureEnergyConfig();
     }
 
@@ -156,7 +201,10 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
     public void invalidateCaps() {
         super.invalidateCaps();
         lazyItemHandler.invalidate();
-        lazyEnergyHandler.invalidate();
+        lazyInputHandler.invalidate();
+        lazyOutputHandler.invalidate();
+        lazyEnergyReceive.invalidate();
+        lazyEnergyBlocked.invalidate();
     }
 
     public void drops() {
