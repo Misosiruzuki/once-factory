@@ -3,6 +3,7 @@ package com.example.examplemod.block.entity;
 import com.example.examplemod.Config;
 import com.example.examplemod.ExampleMod;
 import com.example.examplemod.block.CrusherBlock;
+import com.example.examplemod.energy.MachineEnergyStorage;
 import com.example.examplemod.menu.CrusherMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,23 +25,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * 一度きりの粉砕機の核。
- *
- * - 処理中に寿命が少しずつ減る
- * - 寿命が尽きると壊れた機械に変わる
- * - 見た目劣化は寿命比率で 0/1/2 の3段階
- */
 public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_OUTPUT = 1;
-    public static final int MAX_PROGRESS = 100; // 処理完了までのtick目安
+    public static final int MAX_PROGRESS = 100;
     public static final int DEFAULT_MAX_LIFE = 64;
 
     private final ItemStackHandler itemHandler = new ItemStackHandler(2) {
@@ -50,7 +45,10 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         }
     };
 
+    private final MachineEnergyStorage energyStorage = new MachineEnergyStorage(10000, 200, 0, this::setChanged);
+
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
+    private LazyOptional<IEnergyStorage> lazyEnergyHandler = LazyOptional.empty();
 
     private int progress = 0;
     private int remainingLife;
@@ -63,6 +61,8 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
                 case 0 -> progress;
                 case 1 -> remainingLife;
                 case 2 -> maxLife;
+                case 3 -> energyStorage.getEnergyStored();
+                case 4 -> energyStorage.getMaxEnergyStored();
                 default -> 0;
             };
         }
@@ -73,12 +73,14 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
                 case 0 -> progress = value;
                 case 1 -> remainingLife = value;
                 case 2 -> maxLife = value;
+                case 3 -> energyStorage.setEnergy(value);
+                case 4 -> energyStorage.setCapacity(value);
             }
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return 5;
         }
     };
 
@@ -89,7 +91,13 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         this.remainingLife = life;
     }
 
-    /** クラフト時に寿命の記憶を使った場合など、外部から初期寿命を上書きする */
+    private void ensureEnergyConfig() {
+        int cap = Config.energyCapacity > 0 ? Config.energyCapacity : 10000;
+        if (energyStorage.getMaxEnergyStored() != cap) {
+            energyStorage.setCapacity(cap);
+        }
+    }
+
     public void setInitialLife(int life) {
         this.maxLife = Math.max(1, life);
         this.remainingLife = this.maxLife;
@@ -97,16 +105,21 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         updateDegradationState();
     }
 
-    public int getRemainingLife() {
-        return remainingLife;
-    }
-
-    public int getMaxLife() {
-        return maxLife;
-    }
+    public int getRemainingLife() { return remainingLife; }
+    public int getMaxLife() { return maxLife; }
 
     public float getLifeRatio() {
         return maxLife <= 0 ? 0f : (float) remainingLife / (float) maxLife;
+    }
+
+    public MachineEnergyStorage getEnergyStorage() { return energyStorage; }
+    public int getEnergyStored() { return energyStorage.getEnergyStored(); }
+    public int getMaxEnergyStored() { return energyStorage.getMaxEnergyStored(); }
+
+    public boolean hasPowerForTick() {
+        if (!Config.requireEnergy) return true;
+        int cost = Math.max(0, Config.energyPerTick);
+        return cost == 0 || energyStorage.hasAtLeast(cost);
     }
 
     @Override
@@ -125,6 +138,9 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
             return lazyItemHandler.cast();
         }
+        if (cap == ForgeCapabilities.ENERGY) {
+            return lazyEnergyHandler.cast();
+        }
         return super.getCapability(cap, side);
     }
 
@@ -132,12 +148,15 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
     public void onLoad() {
         super.onLoad();
         lazyItemHandler = LazyOptional.of(() -> itemHandler);
+        lazyEnergyHandler = LazyOptional.of(() -> energyStorage);
+        ensureEnergyConfig();
     }
 
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         lazyItemHandler.invalidate();
+        lazyEnergyHandler.invalidate();
     }
 
     public void drops() {
@@ -154,6 +173,7 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         tag.putInt("progress", progress);
         tag.putInt("RemainingLife", remainingLife);
         tag.putInt("MaxLife", maxLife);
+        tag.put("Energy", energyStorage.serialize());
         super.saveAdditional(tag);
     }
 
@@ -164,16 +184,31 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         progress = tag.getInt("progress");
         remainingLife = tag.getInt("RemainingLife");
         maxLife = tag.contains("MaxLife") ? tag.getInt("MaxLife") : DEFAULT_MAX_LIFE;
+        if (tag.contains("Energy")) {
+            energyStorage.deserialize(tag.getCompound("Energy"));
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CrusherBlockEntity be) {
         if (level.isClientSide) return;
+        be.ensureEnergyConfig();
 
-        if (be.hasRecipe() && be.remainingLife > 0) {
+        boolean canWork = be.hasRecipe() && be.remainingLife > 0 && be.hasPowerForTick();
+
+        if (canWork) {
+            int cost = Math.max(0, Config.energyPerTick);
+            if (Config.requireEnergy && cost > 0) {
+                int used = be.energyStorage.consume(cost, false);
+                if (used < cost) {
+                    be.progress = 0;
+                    be.setChanged();
+                    return;
+                }
+            }
+
             be.progress++;
-            // 処理中に寿命を少しずつ消費（MAX_PROGRESS 回で roughly 1 寿命相当になるよう調整）
-            // ここでは進捗 1 につき寿命を確率的ではなく、一定間隔で減らす
-            if (be.progress % 20 == 0) { // 約1秒ごとに1消費
+
+            if (be.progress % 20 == 0) {
                 be.remainingLife = Math.max(0, be.remainingLife - 1);
                 be.setChanged();
                 be.updateDegradationState();
@@ -188,7 +223,7 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
             if (be.remainingLife <= 0) {
                 be.breakMachine();
             }
-        } else {
+        } else if (be.progress != 0) {
             be.progress = 0;
             be.setChanged();
         }
@@ -197,10 +232,8 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
     private boolean hasRecipe() {
         ItemStack input = itemHandler.getStackInSlot(SLOT_INPUT);
         if (input.isEmpty()) return false;
-
         ItemStack result = getResultFor(input.getItem());
         if (result.isEmpty()) return false;
-
         ItemStack output = itemHandler.getStackInSlot(SLOT_OUTPUT);
         if (output.isEmpty()) return true;
         if (!ItemStack.isSameItemSameTags(output, result)) return false;
@@ -211,9 +244,7 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         ItemStack input = itemHandler.getStackInSlot(SLOT_INPUT);
         ItemStack result = getResultFor(input.getItem());
         if (result.isEmpty()) return;
-
         itemHandler.extractItem(SLOT_INPUT, 1, false);
-
         ItemStack output = itemHandler.getStackInSlot(SLOT_OUTPUT);
         if (output.isEmpty()) {
             itemHandler.setStackInSlot(SLOT_OUTPUT, result.copy());
@@ -222,43 +253,21 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
         }
     }
 
-    /** 簡易ハードコードレシピ。後で RecipeType に置き換え可能 */
     private ItemStack getResultFor(Item item) {
-        if (item == Items.IRON_ORE || item == Items.DEEPSLATE_IRON_ORE) {
-            return new ItemStack(Items.RAW_IRON, 2);
-        }
-        if (item == Items.GOLD_ORE || item == Items.DEEPSLATE_GOLD_ORE) {
-            return new ItemStack(Items.RAW_GOLD, 2);
-        }
-        if (item == Items.COPPER_ORE || item == Items.DEEPSLATE_COPPER_ORE) {
-            return new ItemStack(Items.RAW_COPPER, 3);
-        }
-        if (item == Items.COAL_ORE || item == Items.DEEPSLATE_COAL_ORE) {
-            return new ItemStack(Items.COAL, 3);
-        }
-        if (item == Items.DIAMOND_ORE || item == Items.DEEPSLATE_DIAMOND_ORE) {
-            return new ItemStack(Items.DIAMOND, 2);
-        }
-        if (item == Items.COBBLESTONE) {
-            return new ItemStack(Items.GRAVEL, 1);
-        }
-        if (item == Items.GRAVEL) {
-            return new ItemStack(Items.SAND, 1);
-        }
+        if (item == Items.IRON_ORE || item == Items.DEEPSLATE_IRON_ORE) return new ItemStack(Items.RAW_IRON, 2);
+        if (item == Items.GOLD_ORE || item == Items.DEEPSLATE_GOLD_ORE) return new ItemStack(Items.RAW_GOLD, 2);
+        if (item == Items.COPPER_ORE || item == Items.DEEPSLATE_COPPER_ORE) return new ItemStack(Items.RAW_COPPER, 3);
+        if (item == Items.COAL_ORE || item == Items.DEEPSLATE_COAL_ORE) return new ItemStack(Items.COAL, 3);
+        if (item == Items.DIAMOND_ORE || item == Items.DEEPSLATE_DIAMOND_ORE) return new ItemStack(Items.DIAMOND, 2);
+        if (item == Items.COBBLESTONE) return new ItemStack(Items.GRAVEL, 1);
+        if (item == Items.GRAVEL) return new ItemStack(Items.SAND, 1);
         return ItemStack.EMPTY;
     }
 
     private void updateDegradationState() {
         if (level == null || level.isClientSide) return;
         float ratio = getLifeRatio();
-        int stage;
-        if (ratio > 0.66f) {
-            stage = 0; // 新品
-        } else if (ratio > 0.33f) {
-            stage = 1; // 使用中
-        } else {
-            stage = 2; // 危険
-        }
+        int stage = ratio > 0.66f ? 0 : (ratio > 0.33f ? 1 : 2);
         BlockState current = level.getBlockState(worldPosition);
         if (current.getBlock() instanceof CrusherBlock && current.getValue(CrusherBlock.DEGRADATION) != stage) {
             level.setBlock(worldPosition, current.setValue(CrusherBlock.DEGRADATION, stage), 3);
@@ -267,10 +276,8 @@ public class CrusherBlockEntity extends BlockEntity implements MenuProvider {
 
     private void breakMachine() {
         if (level != null && !level.isClientSide) {
-            // 中身をドロップしてから壊れた機械に置換
             drops();
-            BlockState broken = ExampleMod.BROKEN_MACHINE.get().defaultBlockState();
-            level.setBlock(worldPosition, broken, 3);
+            level.setBlock(worldPosition, ExampleMod.BROKEN_MACHINE.get().defaultBlockState(), 3);
         }
     }
 
