@@ -1,7 +1,7 @@
 package com.oncefactory.item;
 
 import com.oncefactory.Config;
-import com.oncefactory.block.entity.CrusherBlockEntity;
+import com.oncefactory.block.entity.FiniteMachineBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -25,7 +25,7 @@ public class CrusherBlockItem extends BlockItem {
     public static int baseLife() {
         return Config.defaultMachineLife > 0
                 ? Config.defaultMachineLife
-                : CrusherBlockEntity.DEFAULT_MAX_LIFE;
+                : FiniteMachineBlockEntity.DEFAULT_MAX_LIFE;
     }
 
     public static int getInitialLife(ItemStack stack) {
