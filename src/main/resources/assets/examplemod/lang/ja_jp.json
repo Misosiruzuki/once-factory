@@ -1,0 +1,10 @@
+{
+  "itemGroup.examplemod.once_factory": "一度きりの工場",
+  "block.examplemod.crusher": "粉砕機",
+  "block.examplemod.broken_machine": "壊れた機械",
+  "item.examplemod.life_memory": "寿命の記憶",
+  "tooltip.examplemod.life_memory": "死んだ機械の記憶。",
+  "tooltip.examplemod.life_memory_bonus": "クラフト時に使うと初期寿命 +%s",
+  "message.examplemod.machine_dead": "この機械は死んだ。次の工場を設計せよ。",
+  "gui.examplemod.life": "残り寿命: %s / %s"
+}
