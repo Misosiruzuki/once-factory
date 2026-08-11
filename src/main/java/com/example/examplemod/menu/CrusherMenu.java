@@ -26,8 +26,10 @@ public class CrusherMenu extends AbstractContainerMenu {
 
     public CrusherMenu(int id, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ExampleMod.CRUSHER_MENU.get(), id);
-        checkContainerSize(((CrusherBlockEntity) entity).getItemHandler(), 2);
         this.blockEntity = (CrusherBlockEntity) entity;
+        if (this.blockEntity.getItemHandler().getSlots() < 2) {
+            throw new IllegalArgumentException("Invalid container size");
+        }
         this.data = data;
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
