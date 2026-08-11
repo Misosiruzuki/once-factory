@@ -1,30 +1,93 @@
-Once Factory — textures you should draw
-========================================
-See the full Japanese guide in the repository file TEXTURES_TO_DRAW.txt
-(maintained under myforge-mod / project artifacts).
+================================================================================
+Once Factory — 手描きが必要なテクスチャ一覧
+================================================================================
+形式: PNG（推奨: 透過あり RGBA）
+ドット絵の基本: ブロック／アイテムは 16×16 px
+GUI: 176×166 px（推奨 256×166: 右端に矢印スプライト）
 
-Paths under: src/main/resources/assets/oncefactory/textures/
+配置先: src/main/resources/assets/oncefactory/textures/
+  block/  item/  gui/
 
-BLOCK (16x16 PNG)
-  block/crusher_front.png
-  block/crusher_front_used.png
-  block/crusher_front_critical.png
-  block/crusher_side.png
-  block/crusher_side_used.png
-  block/crusher_side_critical.png
-  block/crusher_top.png
-  block/crusher_top_used.png
-  block/crusher_top_critical.png
-  block/crusher_bottom.png (optional)
-  block/broken_machine.png
+仮テクスチャが既に入っています。同じファイル名で上書きしてください。
 
-ITEM (16x16 PNG, transparent background)
-  item/life_memory.png
+--------------------------------------------------------------------------------
+【共通のデザイン方針】
+--------------------------------------------------------------------------------
+・テーマ: 「一度きりの工場」— 使い潰される機械
+・色調: 冷たい金属グレー＋摩耗／錆。新品は整然、末期は亀裂と赤熱感
+・正面の状態ランプ: 新品=緑 / 使用中=黄 / 危険=赤
+・正面は投入口やグリル、上面はホッパー投入口
 
-GUI
-  gui/crusher.png  (176x166 or 256x166 with arrow sprites at x>=176)
+================================================================================
+1. 粉砕機（Crusher）— ブロック 16×16
+================================================================================
+配置: textures/block/
 
-Theme: finite industrial machines — metal, wear stages (green/yellow/red lamp),
-broken remains, crystalline life-memory shard.
+(1) crusher_front.png
+    新品正面。金属パネル、投入／粉砕口、下部に緑ランプ、リベット可。スチール色。
 
-Overwrite the placeholder PNGs with the same filenames.
+(2) crusher_front_used.png
+    使用中正面。同構図＋汚れ・擦り傷。ランプは黄。くすんだ金属。
+
+(3) crusher_front_critical.png
+    危険正面。亀裂・欠け、赤ランプ、錆や焼け。寿命寸前の緊張感。
+
+(4) crusher_side.png
+    新品側面。パネル線・リベット。情報は少なめでよい。
+
+(5) crusher_side_used.png
+    使用中側面。摩耗・汚れ。
+
+(6) crusher_side_critical.png
+    危険側面。亀裂・錆。
+
+(7) crusher_top.png
+    新品上面。中央に四角い投入口（暗い穴）。ホッパー接続を意識。
+
+(8) crusher_top_used.png
+    使用中上面。粉塵汚れ・擦れ。
+
+(9) crusher_top_critical.png
+    危険上面。天板の亀裂・焼け。
+
+(10) crusher_bottom.png 【任意・現状モデル未使用】
+     下面の搬出口。将来6面モデル用。
+
+================================================================================
+2. 壊れた機械 — ブロック 16×16
+================================================================================
+(11) broken_machine.png
+     寿命尽きた残骸。潰れた筐体、大きな亀裂、暗い空洞、錆。灰〜黒。戻らない印象。
+
+================================================================================
+3. 寿命の記憶 — アイテム 16×16（背景透過）
+================================================================================
+(12) life_memory.png
+     青白い結晶／記憶の欠片。白いハイライト1ドット推奨。紙やインゴットに見えないこと。
+
+================================================================================
+4. 粉砕機 GUI
+================================================================================
+(13) crusher.png
+     176×166（推奨 256×166）。バニラ容器風のグレーパネル。
+     入力スロット目安 (56,35)、出力 (116,35)、進捗 (79,35) 付近。
+     文字はコード描画のためテクスチャに文字を焼き込まない。
+     右端 x>=176 に進捗矢印の塗りスプライト（幅24・高さ17目安、UV y=14）を置くとよい。
+
+================================================================================
+【描く優先順位】
+================================================================================
+1. life_memory.png
+2. crusher_front.png / _used / _critical
+3. crusher_top 系
+4. crusher_side 系
+5. broken_machine.png
+6. gui/crusher.png
+7. crusher_bottom.png（任意）
+
+================================================================================
+【チェックリスト】
+================================================================================
+[ ] PNG  [ ] 16×16（GUI以外）  [ ] アイテムは透過
+[ ] ファイル名完全一致  [ ] 正しいフォルダに配置  [ ] 再起動して確認
+================================================================================
