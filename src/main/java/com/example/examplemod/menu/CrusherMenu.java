@@ -21,7 +21,7 @@ public class CrusherMenu extends AbstractContainerMenu {
 
     public CrusherMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
         this(id, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()),
-                new net.minecraft.world.inventory.SimpleContainerData(3));
+                new net.minecraft.world.inventory.SimpleContainerData(5));
     }
 
     public CrusherMenu(int id, Inventory inv, BlockEntity entity, ContainerData data) {
@@ -33,8 +33,8 @@ public class CrusherMenu extends AbstractContainerMenu {
         this.data = data;
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-            this.addSlot(new SlotItemHandler(handler, 0, 56, 35)); // input
-            this.addSlot(new SlotItemHandler(handler, 1, 116, 35)); // output
+            this.addSlot(new SlotItemHandler(handler, 0, 56, 35));
+            this.addSlot(new SlotItemHandler(handler, 1, 116, 35));
         });
 
         addPlayerInventory(inv);
@@ -61,6 +61,14 @@ public class CrusherMenu extends AbstractContainerMenu {
         return data.get(2);
     }
 
+    public int getEnergyStored() {
+        return data.get(3);
+    }
+
+    public int getMaxEnergyStored() {
+        return data.get(4);
+    }
+
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot sourceSlot = slots.get(index);
@@ -70,13 +78,12 @@ public class CrusherMenu extends AbstractContainerMenu {
         ItemStack sourceStack = sourceSlot.getItem();
         ItemStack copy = sourceStack.copy();
 
-        // 0,1 = machine slots; 2-28 = player inv; 29-37 = hotbar
         if (index < 2) {
             if (!this.moveItemStackTo(sourceStack, 2, 38, true)) {
                 return ItemStack.EMPTY;
             }
         } else {
-            if (!this.moveItemStackTo(sourceStack, 0, 1, false)) { // only to input
+            if (!this.moveItemStackTo(sourceStack, 0, 1, false)) {
                 return ItemStack.EMPTY;
             }
         }
